@@ -1,5 +1,6 @@
 import numpy as np
 import cv2 as cv
+from scipy.io import loadmat
 
 # Extract covariance matrix
 def extract_cov(A):
@@ -35,14 +36,22 @@ def data_projection(A, eigVecs, B, avg_spec, r):
 def main():
     dir_img = "./test_data/nature.jpg"
     img = cv.imread(dir_img, 1)
-    img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
+    # annots = loadmat('./test_data/Indian_pines.mat')
+    # img = annots['indian_pines']
+    
     B, C, avg_spec = extract_cov(img)
     eigVecs = extract_pc(C)
-    A_new = data_projection(img, eigVecs, B, avg_spec, 3)
+    A_new = data_projection(img, eigVecs, B, avg_spec, 2)
     pc1 = A_new[0]
+    pc2 = A_new[1]
+    pc3 = A_new[2]
     pc1 = np.reshape(np.uint8(pc1), (img.shape[0], img.shape[1]))
-    cv.imshow("pc1", pc1)
-    cv.imshow("img", img_gray)
+    pc2 = np.reshape(np.uint8(pc2), (img.shape[0], img.shape[1]))
+    pc3 = np.reshape(np.uint8(pc3), (img.shape[0], img.shape[1]))
+    img_new = cv.merge([pc1,pc2,pc3])
+    cv.imshow("img_new", img_new)
+    cv.imshow("img", img)
     cv.waitKey(0)
     cv.destroyAllWindows()
     
