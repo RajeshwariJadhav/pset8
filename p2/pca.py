@@ -29,6 +29,7 @@ def data_projection(A, eigVecs, B, avg_spec, r):
     M = np.mean(A, axis=2)
     R_new = np.matmul(R, R.T)
     print("R new shape", R_new.shape)
+    # note that this was a mistake in the textbook. It should be B.T not B
     A_new = np.matmul(R_new, B.T)
     A_new = np.array([vect + avg_spec for vect in A_new.T]).T
     return A_new
@@ -42,7 +43,7 @@ def main():
     
     B, C, avg_spec = extract_cov(img)
     eigVecs = extract_pc(C)
-    A_new = data_projection(img, eigVecs, B, avg_spec, 2)
+    A_new = data_projection(img, eigVecs, B, avg_spec, 20)
     pc1 = A_new[0]
     pc2 = A_new[1]
     pc3 = A_new[2]
@@ -50,6 +51,7 @@ def main():
     pc2 = np.reshape(np.uint8(pc2), (img.shape[0], img.shape[1]))
     pc3 = np.reshape(np.uint8(pc3), (img.shape[0], img.shape[1]))
     img_new = cv.merge([pc1,pc2,pc3])
+    # img_new = pc1
     cv.imshow("img_new", img_new)
     cv.imshow("img", img)
     cv.waitKey(0)
