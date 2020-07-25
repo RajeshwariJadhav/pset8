@@ -21,6 +21,7 @@ def extract_pc(C):
     idx = eigVals.argsort()
     eigVals = eigVals[idx]
     eigVecs = eigVecs[:,idx]
+    print("eigenvectors: ", eigVecs)
     return eigVecs
 
 def data_projection(A, eigVecs, B, avg_spec, r):
@@ -43,7 +44,7 @@ def main():
     
     B, C, avg_spec = extract_cov(img)
     eigVecs = extract_pc(C)
-    A_new = data_projection(img, eigVecs, B, avg_spec, 20)
+    A_new = data_projection(img, eigVecs, B, avg_spec, 2)
     pc1 = A_new[0]
     pc2 = A_new[1]
     pc3 = A_new[2]
