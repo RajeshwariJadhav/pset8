@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import os
 import scipy.integrate
+import skimage.color as sc
 
 illum = np.loadtxt('./data/illuminant_D65.csv',delimiter=',')
 illum = illum[20:81,:] #extracting 400-700 nm
@@ -30,12 +31,13 @@ for i in range(512):
     for j in range(512):
         radiance[:,i,j] = np.multiply(images[:,i,j],illumSpec) #l = r*e (elementwise multiplication)
 
-sensitivity = np.loadtxt('./data/coneSensitivity.csv',delimiter=',')
-sensitivity = sensitivity[2:63:2] #extracting 400-700 nm with 10 step.
+sensitivity = np.loadtxt('./data/CIE1931.csv',delimiter=',')
+sensitivity = sensitivity[::2] #extracting 400-700 nm with 10 step.
 #separating cone data
 Lcone = sensitivity[:,1]
 Mcone = sensitivity[:,2]
 Scone = sensitivity[:,3]
+
 X = sensitivity[:,0]
 
 #making the L-cone component
@@ -68,9 +70,9 @@ lconeimg/=np.amax(lconeimg)
 mconeimg/=np.amax(mconeimg)
 sconeimg/=np.amax(sconeimg)
 
-lconeimg = np.uint8(lconeimg*255)
-mconeimg = np.uint8(mconeimg*255)
-sconeimg = np.uint8(sconeimg*255)
+# lconeimg = np.uint8(lconeimg*255)
+# mconeimg = np.uint8(mconeimg*255)
+# sconeimg = np.uint8(sconeimg*255)
 
 print("l mean: ", np.mean(lconeimg))
 print("m mean: ", np.mean(mconeimg))
@@ -78,10 +80,55 @@ print("s mean: ", np.mean(sconeimg))
 
 # merging RGB
 img = cv2.merge((lconeimg, mconeimg, sconeimg))
-img_real = cv2.imread("./data/thread_spools_RGB.bmp")
+img_real = cv2.imread("./data/rgb.bmp")
+cv2.imshow("original constructed Image", img)
+
 cv2.imshow("Real Image", img_real)
-cv2.imshow("Constructed Image", img)
+
+#converting XYZ to RGB
+updated = np.zeros((512,512,3))    
+#METHOD 0: 1934 curves from CIE
+updated = img; #already using CIE RGB sensitivities
+
+#METHOD 1: SCIKIT INBUILT FUNCTION
+updated = sc.xyz2rgb(img)
+cv2.imshow("SCIKIT constructed Image", updated)
+
+#METHOD 2:
+#Use conversion matrix, linked at MIT OCW:
+#https://link.springer.com/content/pdf/10.1007%2F978-3-642-27851-8_323-1.pdf
+
+XYZtoRGB = np.array([[2.768,1.751,1.130],
+     [1,4.590,0.060],
+     [0,0.056,5.594]])
+
+for i in range(512):
+    for j in range(512):
+        updated[i,j,:] = np.dot(np.linalg.inv(XYZtoRGB),img[i,j,:])
+
+updated[:,:,0]/=np.amax(updated[:,:,0])
+updated[:,:,1]/=np.amax(updated[:,:,1])
+updated[:,:,2]/=np.amax(updated[:,:,2])
+
+cv2.imshow("matrix constructed Image", updated)
+
+#METHOD 3: ADOBE XYZ TO RGB
+#http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_RGB.html
+
+Mat = np.array([[2.0413690, -0.5649464, -0.3446944],
+[-0.9692660,  1.8760108,  0.0415560],
+ [0.0134474, -0.1183897,  1.0154096]])
+
+for i in range(512):
+    for j in range(512):
+        updated[i,j,:] = np.dot((Mat),img[i,j,:])
+
+updated[:,:,0]/=np.amax(updated[:,:,0])
+updated[:,:,1]/=np.amax(updated[:,:,1])
+updated[:,:,2]/=np.amax(updated[:,:,2])
+
+cv2.imshow("ADOBE constructed Image", updated)
+
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-
