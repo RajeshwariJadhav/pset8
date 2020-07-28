@@ -34,6 +34,7 @@ def illuminate(reflectances, illum, xyzbar):
     # plt.plot(range(400, 730, 10), slice_rad)
     # plt.show()
     # print("radiances shape before reshape: ", radiances.shape)
+
     print("Dim_refl: ", dim_refl)
     radiances = np.transpose(radiances, (1,0,2))
     radiances = np.reshape(radiances, (dim_refl[0]*dim_refl[1], dim_refl[2]))
@@ -56,7 +57,8 @@ def illuminate(reflectances, illum, xyzbar):
     RGB = XYZ_to_sRGB(XYZ)
     print("some vals in RGB: ", RGB[0][0][0], ", ", RGB[1][0][0], ", ", RGB[0][1][0])
     RGB = np.where(RGB<0, 0, RGB)
-    RGB = RGB**0.4
+    RGB = np.where(RGB>1, 1, RGB)
+    print("some vals in RGB after getting rid of outliers: ", RGB[0][0], ", ", RGB[80][0], ", ", RGB[0][50])
     print("RGB before shape: ", RGB.shape)
     temp_rgb = np.transpose(RGB, (2, 0, 1))
     print("RGB middle shape: ", temp_rgb.shape)
@@ -64,12 +66,26 @@ def illuminate(reflectances, illum, xyzbar):
     temp_rgb[0] = temp_rgb[2].copy()
     temp_rgb[2] = temp
     RGB = np.transpose(temp_rgb, (1,2,0))
+    print("some vals in RGB after switching r and b: ", RGB[0][0], ", ", RGB[80][0], ", ", RGB[0][50])
+    print("rgb 244 before powering: ", RGB[244][17])
+    # RGB = RGB**0.4
+    print("some vals in RGB after powering by 0.4: ", RGB[0][0], ", ", RGB[80][0], ", ", RGB[0][50])
     print("RGB after shape: ", RGB.shape)
-    #RGB = np.uint8(255*RGB)
+    z = max(RGB[244][17])
+    print("z: ", z)
+    print("rgb 244: ", RGB[244][17])
+    RGB_clip = np.where(RGB>z, z, RGB)
+    print("rgbclip after getting rid of outliers: ", RGB_clip[0][0], ", ", RGB_clip[120][110], ", ", RGB_clip[0][50])
+    RGB_clip = RGB_clip/z
+    print("rgbclip after dividing: ", RGB_clip[0][0], ", ", RGB_clip[120][110], ", ", RGB_clip[0][50])
+    RGB = RGB_clip**0.4
+    RGB_int =  cv.normalize(RGB, None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8UC1)
+    print("rgbclip after powering: ", RGB[0][0], ", ", RGB[120][110], ", ", RGB[0][50])
     print("RGB shape: ", RGB.shape)
     print("max of rgb: ", np.max(RGB))
     print("min of rgb: ", np.min(RGB))
     cv.imshow("Out", RGB)
+    cv.imshow("int", RGB_int)
     cv.waitKey(0)
     cv.destroyAllWindows()
     
