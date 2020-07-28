@@ -74,11 +74,6 @@ def main():
     # Possible Procedure: Display a hyperspectral image
     # Possible Procedure: Plot a graph of the reflectance spectrum at a pixel
 
-    illum = np.loadtxt('./data/illuminant_D65.csv',delimiter=',')
-    illum = illum[20:81,:] #extracting 400-700 nm
-    illum = illum[::2] #extracting every alternate row (data was originally spaced by 5 nm)
-    illum = illum[:,1] #just the spectral profile
-
     xyzbar = np.loadtxt('./data/CIE1931.csv',delimiter=',')
     xyzbar = xyzbar[::2]
 
