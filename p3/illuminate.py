@@ -16,9 +16,9 @@ def illuminate(reflectances, illum, xyzbar):
         radiances[:,:,i] = reflectances[:,:,i]*illum[i]
 
     radiance = radiances
-    Lcone = xyzbar[:,0]
-    Mcone = xyzbar[:,1]
-    Scone = xyzbar[:,2]
+    Lcone = xyzbar[:,1]
+    Mcone = xyzbar[:,2]
+    Scone = xyzbar[:,3]
     X = np.arange(400,710,10)
 
     #making the L-cone component
@@ -60,21 +60,27 @@ def illuminate(reflectances, illum, xyzbar):
     cv.imshow("xyz", XYZ)
     cv.waitKey(0)
     cv.destroyAllWindows()
-
+    
 def main():
     ref4_dict = loadmat("./manchester/assets/ref4_scene4.mat")
     reflectances = ref4_dict['reflectances']
     reflectances = np.array(reflectances[:,:,:31])
 
+    illum = np.loadtxt('./data/illuminant_D65.csv',delimiter=',')
+    illum = illum[20:81,:] #extracting 400-700 nm
+    illum = illum[::2] #extracting every alternate row (data was originally spaced by 5 nm)
+    illum = illum[:,1] #just the spectral profile
+
     # Possible Procedure: Display a hyperspectral image
     # Possible Procedure: Plot a graph of the reflectance spectrum at a pixel
-    illum_dict = loadmat('./manchester/assets/illum_25000.mat')
-    illum = illum_dict['illum_25000']
-    illum = np.array(illum[:31])
 
-    xyzbar_dict = loadmat("./manchester/assets/xyzbar.mat")
-    xyzbar = xyzbar_dict['xyzbar']
-    xyzbar = np.array(xyzbar[:31])
+    illum = np.loadtxt('./data/illuminant_D65.csv',delimiter=',')
+    illum = illum[20:81,:] #extracting 400-700 nm
+    illum = illum[::2] #extracting every alternate row (data was originally spaced by 5 nm)
+    illum = illum[:,1] #just the spectral profile
+
+    xyzbar = np.loadtxt('./data/CIE1931.csv',delimiter=',')
+    xyzbar = xyzbar[::2]
 
     illuminate(reflectances, illum, xyzbar)
 
