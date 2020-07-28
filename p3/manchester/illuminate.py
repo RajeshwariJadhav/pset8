@@ -15,6 +15,14 @@ def manchester_post_processing(RGB):
     #RGB_int =  cv.normalize(RGB, None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8UC1)
     return RGB
 
+def switch_randb(RGB):
+    temp_rgb = np.transpose(RGB, (2, 0, 1))
+    temp = temp_rgb[0].copy()
+    temp_rgb[0] = temp_rgb[2].copy()
+    temp_rgb[2] = temp
+    RGB = np.transpose(temp_rgb, (1,2,0))
+    return RGB
+    
 def load_images_from_folder(folder):
     i = 0
     images = np.zeros((31,512,512,3)) 
@@ -66,11 +74,7 @@ def illuminate(reflectances, illum, xyzbar):
     RGB = np.where(RGB<0, 0, RGB)
     RGB = np.where(RGB>1, 1, RGB)
 
-    temp_rgb = np.transpose(RGB, (2, 0, 1))
-    temp = temp_rgb[0].copy()
-    temp_rgb[0] = temp_rgb[2].copy()
-    temp_rgb[2] = temp
-    RGB = np.transpose(temp_rgb, (1,2,0))
+    #RGB = switch_randb(RGB)
 
     #RGB = manchester_post_processing(RGB))
 
@@ -98,7 +102,7 @@ def main():
     illumSpec = illum[:,1] #just the spectral profile
     print("illumspec shape", illumSpec.shape)
 
-    pictures = load_images_from_folder('./data/sponges_ms') #get all images
+    pictures = load_images_from_folder('./data/thread_spools_ms') #get all images
     images = pictures[:,:,:,1] #data is originally in duplicated triples
     images = np.transpose(images, (1, 2, 0))
     print("images shape: ", images.shape)
