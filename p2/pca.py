@@ -25,8 +25,9 @@ def extract_cov(A):
 def extract_pc(C):
     eigVals, eigVecs = np.linalg.eig(C)
     idx = eigVals.argsort()
-    eigVals = eigVals[idx]
-    eigVecs = eigVecs[:,idx]
+    eigVals = np.flip(eigVals[idx])
+    
+    eigVecs = np.flip(eigVecs[:,idx])
     return eigVecs
 
 def data_projection(A, eigVecs, B, avg_spec, r):
@@ -42,27 +43,29 @@ def main():
     #dir_img = "./test_data/nature.jpg"
     #img = cv.imread(dir_img, 1)
     pictures = load_images_from_folder('../p3//data/thread_spools_ms')
-    img = pictures[:,:,:,1] #data is originally in duplicated triples
+    img = np.uint8(pictures[:,:,:,1]) #data is originally in duplicated triples
+    dim = img.shape
+    cv.imshow("orig hyperspectral image", img[1])
     img = np.transpose(img, (1,2,0))
-    max_spectra = np.amax(img, axis=(0,1))
-    print("max spectra shape: ", max_spectra.shape)
+    # max_spectra = np.amax(img, axis=(0,1))
     print("img shape: ", img.shape)
 
     #normalizing
-    for i in range(img.shape[2]):
-        img[:,:,i] = np.divide(img[:,:,i],  max_spectra[i])
+    # for i in range(img.shape[2]):
+    #     img[:,:,i] = np.divide(img[:,:,i],  max_spectra[i])
 
     B, C, avg_spec = extract_cov(img)
     eigVecs = extract_pc(C)
-    A_new = np.array(data_projection(img, eigVecs, B, avg_spec, 2)).real
-    pc1 = A_new[0]
-    pc1 = np.reshape(pc1, (img.shape[0], img.shape[1]))
-    pc2 = A_new[1]
-    pc3 = A_new[2]
-    print("A_new shape: ", A_new.shape)
-    print("pc1 shape before reshape: ", pc1.shape)
-    print("pc1: ", pc1)
-    cv.imshow("img_new_pc1", pc1)
+    A_out = np.array(data_projection(img, eigVecs, B, avg_spec, 2)).real
+    A_reshaped = np.zeros(dim)
+    for i in range(A_reshaped.shape[0]):
+        A_reshaped[i] = np.reshape(A_out[i], (dim[1], dim[2]))
+        A_reshaped[i] = cv.normalize(A_reshaped[i], None, alpha=0, beta=1, norm_type=cv.NORM_MINMAX, dtype=cv.CV_32F)
+
+    cv.imshow("img_new_pc1.1", A_reshaped[0])
+    cv.imshow("img_new_pc1.2", A_reshaped[1])
+    cv.imshow("img_new_pc1.3", A_reshaped[2])
+
     #cv.imshow("img", img)
     cv.waitKey(0)
     cv.destroyAllWindows()
@@ -70,12 +73,11 @@ def main():
     #pc1 = np.reshape(np.uint8(pc1), (img.shape[0], img.shape[1]))
     #pc2 = np.reshape(np.uint8(pc2), (img.shape[0], img.shape[1]))
     #pc3 = np.reshape(np.uint8(pc3), (img.shape[0], img.shape[1]))
-
-    pc2 = np.reshape(pc2/255, (img.shape[0], img.shape[1]))
-    pc3 = np.reshape(pc3/255, (img.shape[0], img.shape[1]))
-    img_new = cv.merge([pc1,pc2,pc3])
+    # pc1 = np.reshape(pc1/255, (img.shape[0], img.shape[1]))
+    # pc2 = np.reshape(pc2/255, (img.shape[0], img.shape[1]))
+    # pc3 = np.reshape(pc3/255, (img.shape[0], img.shape[1]))
+    # img_new = cv.merge([pc1,pc2,pc3])
     # img_new = pc1
-    print("img_new", img_new)
     
 if __name__ == "__main__":
     main()
