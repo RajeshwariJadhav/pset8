@@ -5,6 +5,7 @@ S = 3
 w = 5
 h = 4
 M = 3
+alpha = 5*10**(-6) #controls the rate for minimizing Q's L1 norm
 
 y = np.random.random((S, w*h)) #given
 
@@ -12,7 +13,7 @@ J = np.ones((S*w*h, S*M+M*w*h)) #jacobian
 C = np.ones((S*w*h)) #cost
 
 def cost(yrow, ycol, A, Q):
-    return (y[yrow, ycol] - np.dot(A[yrow, :], Q[:,ycol]))**2   
+    return ((y[yrow, ycol] - np.dot(A[yrow, :], Q[:,ycol]))**2 + alpha*np.linalg.norm(Q, ord=1))
 
 def formCost(A,Q):
     for yrow in range(S):
@@ -71,5 +72,4 @@ def GN(A, Q):
 
 A, Q = GN(A, Q)
 
-    
     
