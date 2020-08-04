@@ -9,11 +9,11 @@ alpha = 5*10**(-6) #controls the rate for minimizing Q's L1 norm
 
 y = np.random.random((S, w*h)) #given
 
-J = np.ones((S*w*h, S*M+M*w*h)) #jacobian
+J = np.zeros((S*w*h, S*M+M*w*h)) #jacobian
 C = np.ones((S*w*h)) #cost
 
 def cost(yrow, ycol, A, Q):
-    return ((y[yrow, ycol] - np.dot(A[yrow, :], Q[:,ycol]))**2 + alpha*np.linalg.norm(Q, ord=1))
+    return (((y[yrow, ycol] - np.dot(A[yrow, :], Q[:,ycol]))**2)+alpha*np.linalg.norm(Q, ord= 1))
 
 def formCost(A,Q):
     for yrow in range(S):
@@ -24,11 +24,8 @@ def formCost(A,Q):
 def Ajacobian(yrow, ycol, k, A, Q):
     return (-2*y[yrow][ycol]*Q[k, ycol] + 2*np.dot(A[yrow,:], Q[:,ycol])*Q[k, ycol])
 
-def Qjacobian(yrow, ycol, k, A, Q):
-    return (-2*y[yrow][ycol]*A[yrow, k] + 2*np.dot(A[yrow,:], Q[:,ycol])*A[yrow, k])
-
 def formJacobian(A,Q):
-    
+
     for Jrow in range(S*w*h): #for each residual function
         yrow = Jrow // (w*h) #which y row residual
         ycol = Jrow % (w*h) #which y col residual
@@ -46,27 +43,36 @@ def formJacobian(A,Q):
                 Jcol = S*M + Qcol * M + Qrow #offset for A + index
                 J[Jrow, Jcol] = Qjacobian(yrow, ycol, Qrow, A, Q)
     
+    
 A = np.random.random((S, M)) #to optimize
 Q = np.random.random((M, w*h)) #given
 def GN(A, Q):
-    maxIters = 30
+    maxIters = 100
     iterCount = 0
     cost = list()         
     iters = list()
     while (iterCount < maxIters):
+  
         formJacobian(A,Q)
         formCost(A,Q)
-        subtract = np.dot(np.dot(np.linalg.pinv(np.dot(J.T, J)), J.T), C)
+        
+        #update A
+        subtract = np.dot(np.linalg.pinv(J[:,:S*M]), C)
         A = np.reshape(A, (S*M))
-        Q = np.reshape(Q, (M*w*h), order = 'F')
-        A = A - subtract[:S*M]
-        Q = Q - subtract[S*M:]
+        A = A - subtract
         A = np.reshape(A, (S, M))
+        
+        #update Q
+        subtract = np.dot(np.linalg.pinv(J[:,S*M:]), C)
+        Q = np.reshape(Q, (M*w*h), order = 'F')
+        Q = Q - subtract
         Q = np.reshape(Q, (M, w*h), order = 'F')
+        
         iters.append(iterCount)
         cost.append(np.sum(C))
         iterCount+=1
     print(cost)
+    plt.plot(iters, cost)
     return A, Q
 
 
