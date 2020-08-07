@@ -65,7 +65,11 @@ def main():
     ref4_dict = loadmat("./manchester/assets/ref4_scene4.mat")
     reflectances = ref4_dict['reflectances']
     reflectances = np.array(reflectances[:,:,:31])
-
+    cv.imshow("Sample Hyperspectral Image", np.reshape(reflectances[0], (255, 335)))
+    cv.waitKey(0)
+    cd.destroyAllWindows()
+    plt.plot(reflectances)
+    plt.show()
     illum = np.loadtxt('./data/illuminant_D65.csv',delimiter=',')
     illum = illum[20:81,:] #extracting 400-700 nm
     illum = illum[::2] #extracting every alternate row (data was originally spaced by 5 nm)

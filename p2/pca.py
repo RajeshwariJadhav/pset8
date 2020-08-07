@@ -39,21 +39,12 @@ def data_projection(A, eigVecs, B, avg_spec, r):
     A_new = np.array([vect + avg_spec for vect in A_new.T]).T
     return A_new
 
-def main():
-    #dir_img = "./test_data/nature.jpg"
-    #img = cv.imread(dir_img, 1)
+def hyperspectral():
     pictures = load_images_from_folder('../p3//data/thread_spools_ms')
     img = np.uint8(pictures[:,:,:,1]) #data is originally in duplicated triples
     dim = img.shape
     cv.imshow("orig hyperspectral image", img[1])
     img = np.transpose(img, (1,2,0))
-    # max_spectra = np.amax(img, axis=(0,1))
-    print("img shape: ", img.shape)
-
-    #normalizing
-    # for i in range(img.shape[2]):
-    #     img[:,:,i] = np.divide(img[:,:,i],  max_spectra[i])
-
     B, C, avg_spec = extract_cov(img)
     eigVecs = extract_pc(C)
     A_out = np.array(data_projection(img, eigVecs, B, avg_spec, 2)).real
@@ -70,14 +61,30 @@ def main():
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-    #pc1 = np.reshape(np.uint8(pc1), (img.shape[0], img.shape[1]))
-    #pc2 = np.reshape(np.uint8(pc2), (img.shape[0], img.shape[1]))
-    #pc3 = np.reshape(np.uint8(pc3), (img.shape[0], img.shape[1]))
-    # pc1 = np.reshape(pc1/255, (img.shape[0], img.shape[1]))
-    # pc2 = np.reshape(pc2/255, (img.shape[0], img.shape[1]))
-    # pc3 = np.reshape(pc3/255, (img.shape[0], img.shape[1]))
-    # img_new = cv.merge([pc1,pc2,pc3])
-    # img_new = pc1
+def main():
+    dir_img = "./test_data/nature.jpg"
+    img = cv.imread(dir_img, 1)
+
+    # max_spectra = np.amax(img, axis=(0,1))
+    print("img shape: ", img.shape)
+
+    #normalizing
+    # for i in range(img.shape[2]):
+    #     img[:,:,i] = np.divide(img[:,:,i],  max_spectra[i])
+    B, C, avg_spec = extract_cov(img)
+    eigVecs = extract_pc(C)
+    A_out = np.array(data_projection(img, eigVecs, B, avg_spec, 1)).real
+    pc1 = A_out[0]
+    pc2 = A_out[1]
+    pc3 = A_out[2]
+    pc1 = np.reshape(pc1/255, (img.shape[0], img.shape[1]))
+    pc2 = np.reshape(pc2/255, (img.shape[0], img.shape[1]))
+    pc3 = np.reshape(pc3/255, (img.shape[0], img.shape[1]))
+    img_new = cv.merge([pc1,pc2,pc3])
+    cv.imshow("orig img", img)
+    cv.imshow("img new", img_new)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
     
 if __name__ == "__main__":
     main()
