@@ -1,8 +1,10 @@
 import numpy as np
-import scipy.optimize as opt
+#import scipy.optimize as opt
+import opt_package.optimize_mine.py
 import matplotlib.pyplot as plt
+#exec("optimize_mine.py")
 # Start with random A having independent columns, and set X accordingly
-
+#np.random.seed(1)
 # at every iteration:
 # 1. h = minimize L1(x+dx) + Lambda (w(h)-r) --> 
 # 2. add ax to A and find x accordingly
@@ -72,7 +74,26 @@ def hCost(x, r, lambd, A, Q):
 
 def findH(h, r, lambd):
     x0 = h
-    optimalH = opt.minimize(hCost, x0, args = (r, lambd, A, X), method = "CG")
+    #print("x0: ", x0)
+    print("r: ", r)
+    print("hCost: ", hCost)
+    print("x0: ", x0)
+    print("lambd: ", lambd)
+    print("A: ", A)
+    print("X: ", X)
+
+    print("r shape: ", np.shape(r))
+    print("x0.shape: ", np.shape(x0))
+    print("A.shape: ", np.shape(A))
+    print("X.shape: ", np.shape(X))
+
+    #try:
+    #optimalH = opt.minimize(hCost, x0, args = (r, lambd, A, X), method = "CG")
+    optimalH = minimize(hCost, x0, args = (r, lambd, A, X), method = "CG")
+    #except Exception:
+    #    import pdb; pdb.set_trace()
+    #    raise
+    
     return (optimalH.x)
 
 def r(da, dx, hnew, h):
