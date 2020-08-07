@@ -52,6 +52,9 @@ def J(h, nu):
         return ret
     return np.inf
     
+def finalCost(y,A,X):
+    return np.linalg.norm(y - np.dot(A, X))
+
 def projection(A, X):
     for i in range(len(A[0])):
         A[:,i] = A[:,i]/np.linalg.norm(A[:,i])
@@ -82,13 +85,14 @@ def r(da, dx, hnew, h):
 
     
 def GN(A, X):
-    maxIters = 30
+    maxIters = 100
     i = 0
     h = [np.random.random(A.shape), np.random.random(X.shape)]
     r = np.array([np.zeros(np.dot(A,X).shape),np.zeros(M)])
-    lambd = 0.5
+    lambd = 1
+    iters = list()
+    costs = list()
     while i < maxIters:
-        print (i)
         newh = findH(h, r, lambd)
         r = r + psi(newh, A, X)-psi(h, A, X)
         h = newh
@@ -97,6 +101,9 @@ def GN(A, X):
         A = np.nan_to_num(A)
         X = np.nan_to_num(X)
         i+=1
+        iters.append(i)
+        costs.append(finalCost(y,A,X))
+    plt.plot(iters, costs)
     return A, X
 
 
