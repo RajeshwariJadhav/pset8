@@ -97,9 +97,9 @@ def GN(A, X):
         i+=1
     return A, X
 
-r = rInit
-x0 = hInit
 
+r = np.zeros(M)
+x0 = np.array([np.random.random(A.shape), np.random.random(X.shape)])
 
 A, X = GN(A, X)
 print("A ", A)
