@@ -45,10 +45,12 @@ def J(h, nu):
     da = h[0]
     dx = h[1]
     add = np.linalg.norm(dx)**2+np.linalg.norm(da)**2
-    if add <= nu:
-        return (np.linalg.norm(X + dx, ord = 1))
-    else:
-        return np.inf
+    if (add <= nu):
+        temp = float(np.linalg.norm(X + dx, ord = 1))
+        ret = np.random.random()/10000
+        ret += temp
+        return ret
+    return np.inf
     
 def projection(A, X):
     for i in range(len(A[0])):
