@@ -72,7 +72,7 @@ def hCost(x, r, lambd, A, Q):
 
 def findH(h, r, lambd):
     x0 = h
-    optimalH = opt.minimize(hCost, x0, args = (r, lambd, A, Q), method = "CG")
+    optimalH = opt.minimize(hCost, x0, args = (r, lambd, A, X), method = "CG")
     return (optimalH.x)
 
 def r(da, dx, hnew, h):
