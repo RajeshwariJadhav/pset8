@@ -1,6 +1,6 @@
 import numpy as np
-#import scipy.optimize as opt
-import opt_package.optimize_mine.py
+import scipy.optimize as opt
+#import opt_package.optimize_mine.py
 import matplotlib.pyplot as plt
 #exec("optimize_mine.py")
 # Start with random A having independent columns, and set X accordingly
@@ -57,6 +57,9 @@ def J(h, nu):
 def finalCost(y,A,X):
     return np.linalg.norm(y - np.dot(A, X))
 
+def checkCost(X, dx):
+    return np.linalg.norm(X + dx, 1)
+
 def projection(A, X):
     for i in range(len(A[0])):
         A[:,i] = A[:,i]/np.linalg.norm(A[:,i])
@@ -78,23 +81,24 @@ def hCost(x, r, lambd, A, Q):
     return ret
 
 def findH(h, r, lambd):
-    x0 = h
+    x0 = h.copy()
     #print("x0: ", x0)
-    print("r: ", r)
-    print("hCost: ", hCost)
-    print("x0: ", x0)
-    print("lambd: ", lambd)
-    print("A: ", A)
-    print("X: ", X)
+    # print("r: ", r)
+    # print("hCost: ", hCost)
+    # print("x0: ", x0)
+    # print("lambd: ", lambd)
+    # print("A: ", A)
+    # print("X: ", X)
 
-    print("r shape: ", np.shape(r))
-    print("x0.shape: ", np.shape(x0))
-    print("A.shape: ", np.shape(A))
-    print("X.shape: ", np.shape(X))
+    # print("r shape: ", np.shape(r))
+    # print("x0.shape: ", np.shape(x0))
+    # print("A.shape: ", np.shape(A))
+    # print("X.shape: ", np.shape(X))
 
     #try:
-    #optimalH = opt.minimize(hCost, x0, args = (r, lambd, A, X), method = "CG")
-    optimalH = minimize(hCost, x0, args = (r, lambd, A, X), method = "CG")
+    optimalH = opt.minimize(hCost, x0, args = (r, lambd, A, X), method = "CG")
+    #    print("Optimal H: ", optimalH)
+    #optimalH = minimize(hCost, x0, args = (r, lambd, A, X), method = "CG")
     #except Exception:
     #    import pdb; pdb.set_trace()
     #    raise
@@ -106,7 +110,10 @@ def r(da, dx, hnew, h):
 
     
 def GN(A, X):
-    maxIters = 100
+    #plotting h every loop
+    all_cost = []
+    
+    maxIters = 200
     i = 0
     h = [np.random.random(A.shape), np.random.random(X.shape)]
     r = np.array([np.zeros(np.dot(A,X).shape),np.zeros(M)])
@@ -114,6 +121,8 @@ def GN(A, X):
     iters = list()
     costs = list()
     while i < maxIters:
+        #print("h_(da): ", h[0])
+        all_cost.append(checkCost(X, h[1]))
         newh = findH(h, r, lambd)
         r = r + psi(newh, A, X)-psi(h, A, X)
         h = newh
@@ -125,6 +134,10 @@ def GN(A, X):
         iters.append(i)
         costs.append(finalCost(y,A,X))
     plt.plot(iters, costs)
+    print("All cost: ", all_cost)
+    plot2 = plt.figure(2)
+    plt.plot(all_cost)
+    plt.show()
     return A, X
 
 
@@ -136,4 +149,3 @@ print("A ", A)
 print("X", X)
 print("AX", np.dot(A,X))
 print("y", y)
-
