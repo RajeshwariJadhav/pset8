@@ -83,63 +83,37 @@ def GN(A, X):
         i+=1
     return A, X
 
-def cost_recon(yrow, ycol):
-    return (y[yrow, ycol] - np.dot(A[yrow, :], Q[:,ycol]))**2   
 
-def formCost_recon():
-    for yrow in range(S):
-        for ycol in range(w*h):
-            C[yrow*w*h + ycol] = cost(yrow, ycol)
-            #swh x 1
+# This function finds the h that minimizs L2 norm(Y_rgb - P_rgb*A*h[i][j]) for every pixel (i,j) in the hi res image
+def find_min_h(Y_rgb, P_rgb, A, W, H, M):
+    h = np.zeros((W, H, M))
+    for i in range(Y_rgb.shape[0]):
+        for j in range(Y_rgb.shape[1]):
+            h_i = np.zeros(M)
+            lowest = np.inf
+            for i in range(M):
+                h_i[i] = 1
+                curr_min = np.linalg.norm(np.subtract(Y_rgb[i][j],
+                                                      np.matmul(np.matmul(P_rgb, A), h_i)), 2)
+                if curr_min < lowest:
+                    lowest = curr_min
+                h_i[i] = 0
+            h[i][j] = h_i
+    return h
 
-def hjacobian(Y_rgb, A, h, yrow, ycol, k):
-    return (-2*Y_rgb[yrow][ycol]*A[k, ycol] + 2*np.dot(h[yrow,:], A[:,ycol])*A[k, ycol])
 
-#def Qjacobian(yrow, ycol, k):
-#    return (-2*y[yrow][ycol]*A[yrow, k] + 2*np.dot(A[yrow,:], Q[:,ycol])*A[yrow, k])
-
-def formJacobian_recon(Y_rgb, P_rgb, A, h):
-
-    for Jrow in range(S*w*h): #for each residual function
-        yrow = Jrow // (w*h) #which y row residual
-        ycol = Jrow % (w*h) #which y col residual
-
-        #the A jacobian segment   
-        for hrow in range(S): #each row in A
-            for hcol in range(M): #each column in A
-                Jcol = hrow * M + hcol 
-                J[Jrow, Jcol] = hjacobian(Y_rgb, A, h, yrow, ycol, hcol)
-        return J
-
-def GN_recon(Y_rgb, P_rgb, A, h):
-    maxIters = 12
-    iterCount = 0
-    cost = list()         
-    iters = list()
-    while (iterCount < maxIters):
-        J = formJacobian(Y_rgb, P_rgb, A, h)
-        formCost()
-        subtract = np.dot(np.dot(np.linalg.pinv(np.dot(J.T, J)), J.T), C)
-        h = np.reshape(h, (S*M))
-        Q = np.reshape(Q, (M*w*h), order = 'F')
-        h = h - subtract[:S*M]
-        Q = Q - subtract[S*M:]
-        h = np.reshape(h, (S, M))
-        Q = np.reshape(Q, (M, w*h), order = 'F')
-        iters.append(iterCount)
-        cost.append(np.sum(C))
-        iterCount+=1
-    print(cost)
-    return A, Q
-    
 S = 4
 M = 3
 w = 4
 h = 5
 g = 0
+W = 10
+H = 10
+s = 3
 
 
-P_rgb = np.array([])
+P_rgb = np.random.random((3, S))
+Y_rgb = np.random.random((W, H, 3))
 
 A = np.array([
     [1,0,0],
@@ -154,7 +128,7 @@ X = np.array([
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 , 0, 0, 0, 0]
 ])
 
-y = np.dot(A,X)
+y_hs = np.dot(A,X)
 
 while g<2:
     A = np.array([
@@ -171,13 +145,20 @@ while g<2:
     [0,0,0]
     ])    
         
-    X = np.dot(np.linalg.pinv(A),y) #initialize X according to A
+    X = np.dot(np.linalg.pinv(A),y_hs) #initialize X according to A
     X = X.astype(float)
     A, X = GN(A, X)
-    print(np.linalg.norm(y-np.dot(A,X)))
+
+    h = find_min_h(Y_rgb, P_rgb, A, W, H, M)
+    Z_hires = np.zeros(W, H, S)
+    for i in range(W):
+        for j in range(H):
+            Z_hires[i][j] = np.matmul(A, h[i][j])
+    
+    print(np.linalg.norm(y_hs-np.dot(A,X)))
     print("A ", A)
     print("X", X.round(1))
     print("AX", np.dot(A,X).round(3))
-    print("y", y)
+    print("y", y_hs)
     g+=1
 
