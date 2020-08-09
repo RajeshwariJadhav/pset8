@@ -122,4 +122,40 @@ print("AX", np.dot(A,X).round(3))
 print("y", y)
 g+=1
 
+#buggy part for extension to find H
+yRGB = rgb[250:325,300:375]
+
+
+def minHCost(x, yIJ, pRGB, A, epsilon):
+#     constraint = np.linalg.norm(yIJ-np.dot(pRGB,np.dot(A,x)))
+#     if constraint <= epsilon:
+#         return np.linalg.norm(x, ord=1)
+#     else:
+#         return np.inf
+    l1 = np.linalg.norm(x, ord=1)
+    l2 = np.linalg.norm(yIJ-np.dot(pRGB,np.dot(A,x)))
+    return l1+2*l2
+    
+def findFinalH(h,yRGB, pRGB, A):
+    x0 = h
+    epsilon = 5
+    optimalH = opt.minimize(minHCost, x0, args = (yRGB, pRGB, A, epsilon), method = "CG")
+    return (optimalH.x)
+
+pRGB = np.ones((3,S))
+np.random.seed(0)
+H = np.dot(np.linalg.pinv(A), np.dot(np.linalg.pinv(pRGB), yRGB)) #initial guess
+Hinit = np.array(H)
+
+pah = np.dot(pRGB,np.dot(A, H))
+print(np.linalg.norm(yRGB-pah))
+
+for c in range():
+    yIJ = yRGB[:,c]
+    x =np.array(H[:,c])
+    a = findFinalH(x, yIJ, pRGB, A)
+    H[:,c]=a
+
+
+
 
