@@ -87,7 +87,7 @@ def load_images_from_folder(folder):
             i+=1
     return images
 
-pictures = load_images_from_folder('./data/thread_spools_ms') #get all images
+pictures = load_images_from_folder('./data/sponges_ms') #get all images
 images = pictures[:,:,:,1] #data is originally in duplicated triples
 images = images[::3,250:325:4,300:375:4] #take the central part where 4 colors are visible, and sample every 4 pixels to make it "low res"
 
