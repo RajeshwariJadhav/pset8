@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import random
 import cv2 as cv
 import os
+from scipy.io import loadmat
 # np.random.seed(0)
 
 def psi(h, A, X):
@@ -87,18 +88,42 @@ def load_images_from_folder(folder):
             i+=1
     return images
 
+def main_manchester_data(w_h, h_h):
+    ref4_dict = loadmat("../p3/manchester/assets/ref4_scene4.mat")
+    reflectances = ref4_dict['reflectances']
+    reflectances = np.transpose(reflectances, (2, 0, 1))
+    original_hires = reflectances[0, h_h[0]:h_h[1], w_h[0]:w_h[1]]
+    reflectances = reflectances[::3, h_h[0]:h_h[1]:4, w_h[0]:w_h[1]:4]
+    rgb = cv.imread("../p3/manchester/manchester_rgb.jpg", 1)
+    rgb = rgb[h_h[0]:h_h[1], w_h[0]:w_h[1]]
+    print("rgb in man func:", rgb.shape)
+    print("img in man func: ", reflectances.shape)
+    return original_hires, rgb, reflectances
+    # Possible Procedure: Display a hyperspectral image
+    # Possible Procedure: Plot a graph of the reflectance spectrum at a pixel
+
 pictures = load_images_from_folder('./data/sponges_ms') #get all images
 images = pictures[:,:,:,1] #data is originally in duplicated triples
 images = images[::3,250:325:4,300:375:4] #take the central part where 4 colors are visible, and sample every 4 pixels to make it "low res"
 
 rgb = plt.imread(('./data/rgb.bmp'))
 
+# manchester data
+h_h = (83,173)
+w_h = (63,153)
+
+original_hires, rgb, images = main_manchester_data(w_h, h_h)
+print("RGB shape: ", rgb.shape)
+print("images shape: ", images.shape)
+original_lowres = images[0]
+
 y = np.reshape(images, (images.shape[0], images.shape[1]*images.shape[2]))
 S = y.shape[0]
 M = 3
 w = images.shape[1]
 h = images.shape[2]
-
+w_l = w_h[1]-w_h[0]
+h_l = h_h[1]-h_h[0]
 A = np.zeros((S,M))
 #initialize A to have independent cols
 for i in range(S):
@@ -112,7 +137,9 @@ A, X = GN(A, X)
 
 #********************FINDING H *********************
 
-yRGB = (rgb[250:325,300:375])
+#yRGB = (rgb[250:325,300:375])
+# Manchester yRGB
+yRGB = rgb
 yRGB = np.reshape(yRGB, (yRGB.shape[2], yRGB.shape[0]*yRGB.shape[1]))
 
 def minHCost(x, yIJ, pRGB, A, epsilon):
@@ -127,29 +154,37 @@ def findFinalH(h,yRGB, pRGB, A):
     optimalH = opt.minimize(minHCost, x0, args = (yRGB, pRGB, A, epsilon), method = "CG")
     return (optimalH.x)
 
-pRGB = np.ones((3,S))
+#pRGB = np.ones((3,S))
+pRGB = np.loadtxt('../p3/data/CIE1931.csv', delimiter=',')[::2]
+pRGB = pRGB[::3]
+pRGB = np.transpose(pRGB)[1:4]
+print("pRGB shape: ", pRGB.shape)
+
 # so far initial guess works the best but optimization function might need more work.
 #is pinv good enough?
 H = np.dot(np.linalg.pinv(A), np.dot(np.linalg.pinv(pRGB), yRGB)) 
-
-# for c in range(yRGB.shape[1]):
-#     yIJ = yRGB[:,c]
-#     x =np.array(H[:,c])
-#     a = findFinalH(x, yIJ, pRGB, A)
-#     H[:,c]=a
-
+print("Old H: ", H)
+#for c in range(yRGB.shape[1]):
+#    yIJ = yRGB[:,c]
+#    x =np.array(H[:,c])
+#    a = findFinalH(x, yIJ, pRGB, A)
+#    H[:,c]=a
+#print("New H: ", H)
 #*************************FINDING Z****************
 
 Z = np.dot(A, H)
 print(Z.shape) #yay
 
-Z = np.reshape(Z, (Z.shape[0], 75,75))
+Z = np.reshape(Z, (Z.shape[0], h_l,w_l))
 print(Z.shape)
-Z[0,:,:] = np.uint8(Z[0,:,:])
+for i in range(Z.shape[0]):
+    Z[i] = cv.normalize(Z[i],  None, 0, 1, cv.NORM_MINMAX, dtype=cv.CV_32F)
+
+print("Max in final Z: ", np.amax(Z))
+print("Min in final Z: ", np.amin(Z))
+#print("Final Z print: ", Z)
+cv.imshow("Final Z", Z[0])
+cv.imshow("original low res Z[0]", original_lowres)
+cv.imshow("original hi res Z[0]", original_hires)
 plt.imshow(Z[0,:,:], cmap = 'gray')
-
-
-
-
-
-
+plt.show()
