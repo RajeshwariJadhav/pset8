@@ -5,6 +5,7 @@ import random
 import cv2 as cv
 import os
 from scipy.io import loadmat
+from scipy.io import savemat
 # np.random.seed(0)
 
 def psi(h, A, X):
@@ -109,8 +110,8 @@ images = images[::3,250:325:4,300:375:4] #take the central part where 4 colors a
 rgb = plt.imread(('./data/rgb.bmp'))
 
 # manchester data
-h_h = (83,173)
-w_h = (63,153)
+h_h = (83,183)
+w_h = (63,163)
 
 original_hires, rgb, images = main_manchester_data(w_h, h_h)
 print("RGB shape: ", rgb.shape)
@@ -136,7 +137,39 @@ A, X = GN(A, X)
 # yRGB = rgb[290:325,300:340]
 
 #********************FINDING H *********************
+# ****************** matlab code method **************
+def reconstruct_hyperspectral(yRGB,y,Prgb,A,X):
+    K_TO_KEEP = 6
+    ETA = 0.6
+    w,h,s = y.shape
+    W,H,_ = yRGB.shape
+    blockW = W/w
+    blockH = H/h
+    reconstructedHS = np.zeros(W,H,s)
 
+    for i in range(h):
+        for j in range(w):
+            X_block = X[:,i+w*j]
+            X_indices = np.argsort(X_block)[::-1]
+            AI = [A[:,ind] for ind in X_indices]
+            PAI = np.matmul(np.transpose(Prgb), AI)
+
+            for aa in blockW:
+                for bb in blockH:
+                    q = yRGB[blockW*i+aa, blockH*j+bb, :]
+                    x = bpdn_direct(PAI, q, 2^8*ETA)
+                    reconstructedHS[blockW*i+aa, blockH*j+bb, :] = np.matmul(AI, x)
+            print("Block: ", i, ", ", j, ", ")
+
+def bpdn_direct(A, y, eta):
+    m, n = A.shape
+    xOpt = np.zeros(n)
+
+    if np.linalg.norm(y):
+        # NOT SURE if this is what you are supposed to return
+        return x0pt
+                                        
+#************ orig method ***************************
 #yRGB = (rgb[250:325,300:375])
 # Manchester yRGB
 yRGB = rgb
@@ -162,8 +195,33 @@ print("pRGB shape: ", pRGB.shape)
 
 # so far initial guess works the best but optimization function might need more work.
 #is pinv good enough?
+
+
+#Loading the reconstruct_hyperspectral.m parameters
+yRGB = cv.normalize(yRGB, None, np.amin(y), np.amax(y), cv.NORM_MINMAX, dtype=cv.CV_32F)
+print("yRGB: ", yRGB)
+print("yhs: ", y)
+print("A: ", A)
+print("X: ", X)
+print("y min and max: ", np.amin(y), ", ", np.amax(y))
+savemat('bpnd_params.mat', mdict={'yRGB': np.reshape(np.transpose(yRGB), (h_l, w_l, 3)), 'yhs' : np.reshape(np.transpose(y), (h, w, S)), 'Prgb' : pRGB,  'A' : A, 'X' : X})
+
+# Displaying the reconstruct_hyperspectral.m output
+# Note that reconstruct.hyp... outputs the Z matrix (not the H matrix)
+H = loadmat('./h_matrix.mat')
+H = H['reconstructedHS']
+print("Old H shape: ", H.shape)
+H = np.transpose(H, (2, 0, 1))
+plt.imshow(H[0,:,:], cmap = 'gray')
+cv.imshow("Matlab h optimizatio Z[0]", H[0])
+plt.show()
+cv.waitKey(0)
+cv.destroyAllWindows()
+#print("H dict: ", H)
+
+
 H = np.dot(np.linalg.pinv(A), np.dot(np.linalg.pinv(pRGB), yRGB)) 
-print("Old H: ", H)
+print("New H shape: ", H.shape)
 #for c in range(yRGB.shape[1]):
 #    yIJ = yRGB[:,c]
 #    x =np.array(H[:,c])
