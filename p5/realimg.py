@@ -6,6 +6,7 @@ import cv2 as cv
 import os
 from scipy.io import loadmat
 from scipy.io import savemat
+import sys
 # np.random.seed(0)
 
 def psi(h, A, X):
@@ -105,18 +106,18 @@ def main_manchester_data(w_h, h_h):
 
 pictures = load_images_from_folder('./data/sponges_ms') #get all images
 images = pictures[:,:,:,1] #data is originally in duplicated triples
-images = images[::3,250:325:4,300:375:4] #take the central part where 4 colors are visible, and sample every 4 pixels to make it "low res"
+images = images[:,250:326:4,300:376:4] #take the central part where 4 colors are visible, and sample every 4 pixels to make it "low res"
 
 rgb = plt.imread(('./data/rgb.bmp'))
 
-# manchester data
-h_h = (83,183)
-w_h = (63,163)
+# # manchester data
+h_h = (250,326)
+w_h = (300,376)
 
-original_hires, rgb, images = main_manchester_data(w_h, h_h)
-print("RGB shape: ", rgb.shape)
-print("images shape: ", images.shape)
-original_lowres = images[0]
+# original_hires, rgb, images = main_manchester_data(w_h, h_h)
+# print("RGB shape: ", rgb.shape)
+# print("images shape: ", images.shape)
+# original_lowres = images[0]
 
 y = np.reshape(images, (images.shape[0], images.shape[1]*images.shape[2]))
 S = y.shape[0]
@@ -170,10 +171,10 @@ def bpdn_direct(A, y, eta):
         return x0pt
                                         
 #************ orig method ***************************
-#yRGB = (rgb[250:325,300:375])
+yRGB = (rgb[250:326,300:376])
 # Manchester yRGB
-yRGB = rgb
-yRGB = np.reshape(yRGB, (yRGB.shape[2], yRGB.shape[0]*yRGB.shape[1]))
+# yRGB = rgb
+# yRGB = np.reshape(yRGB, (yRGB.shape[2], yRGB.shape[0]*yRGB.shape[1]))
 
 def minHCost(x, yIJ, pRGB, A, epsilon):
     #here x is H (to be found)
@@ -189,7 +190,7 @@ def findFinalH(h,yRGB, pRGB, A):
 
 #pRGB = np.ones((3,S))
 pRGB = np.loadtxt('../p3/data/CIE1931.csv', delimiter=',')[::2]
-pRGB = pRGB[::3]
+pRGB = pRGB[::]
 pRGB = np.transpose(pRGB)[1:4]
 print("pRGB shape: ", pRGB.shape)
 
@@ -204,8 +205,9 @@ print("yhs: ", y)
 print("A: ", A)
 print("X: ", X)
 print("y min and max: ", np.amin(y), ", ", np.amax(y))
-savemat('bpnd_params.mat', mdict={'yRGB': np.reshape(np.transpose(yRGB), (h_l, w_l, 3)), 'yhs' : np.reshape(np.transpose(y), (h, w, S)), 'Prgb' : pRGB,  'A' : A, 'X' : X})
-
+savemat('bpnd_params.mat', mdict={'yRGB': yRGB, 'yhs' : np.reshape(np.transpose(y), (h, w, S)), 'A' : A, 'X' : X})
+#savemat('bpnd_params.mat', mdict={'yRGB': np.reshape(np.transpose(yRGB), (h_l, w_l, 3)), 'yhs' : np.reshape(np.transpose(y), (h, w, S)), 'Prgb' : pRGB,  'A' : A, 'X' : X})
+sys.exit(0)
 # Displaying the reconstruct_hyperspectral.m output
 # Note that reconstruct.hyp... outputs the Z matrix (not the H matrix)
 H = loadmat('./h_matrix.mat')

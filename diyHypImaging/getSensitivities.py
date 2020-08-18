@@ -56,8 +56,8 @@ def main():
         filtered_1.append(np.multiply(filter_515[:,1], sensitivity[i]))
     display_sensitivity(filtered_1)
 
-
     plt.show()
+
   
 if __name__ == "__main__":
     main()
