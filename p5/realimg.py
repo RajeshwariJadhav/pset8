@@ -85,6 +85,7 @@ def load_images_from_folder(folder):
     images = np.zeros((31,512,512,3)) 
     for filename in os.listdir(folder):
         img = cv.imread(os.path.join(folder,filename))
+        img = cv.normalize(img, None, 0, 1, cv.NORM_MINMAX, dtype=cv.CV_32F)
         if img is not None:
             images[i]=img
             i+=1
@@ -207,7 +208,11 @@ print("X: ", X)
 print("y min and max: ", np.amin(y), ", ", np.amax(y))
 savemat('bpnd_params.mat', mdict={'yRGB': yRGB, 'yhs' : np.reshape(np.transpose(y), (h, w, S)), 'A' : A, 'X' : X})
 #savemat('bpnd_params.mat', mdict={'yRGB': np.reshape(np.transpose(yRGB), (h_l, w_l, 3)), 'yhs' : np.reshape(np.transpose(y), (h, w, S)), 'Prgb' : pRGB,  'A' : A, 'X' : X})
+
+# EXIT EARLY SINCE WE JUST WANT THE .mat FILE
 sys.exit(0)
+
+
 # Displaying the reconstruct_hyperspectral.m output
 # Note that reconstruct.hyp... outputs the Z matrix (not the H matrix)
 H = loadmat('./h_matrix.mat')
