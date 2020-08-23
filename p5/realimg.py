@@ -10,7 +10,11 @@ from scipy.io import loadmat
 def psi(h, A, X):
     da = h[0]
     dx = h[1]
-    ret = np.array([np.dot(A, dx) + np.dot(da, X), np.diag(np.dot(A.T, da))])
+    ret = np.zeros((2), dtype=object)
+    ret[0] =  np.add(np.dot(A, dx), np.dot(da, X))
+    ret[1] = np.diag(np.dot(A.T, da))
+    ret = np.array(ret)
+    #ret = np.array([np.dot(A, dx) + np.dot(da, X), np.diag(np.dot(A.T, da))])
     return ret
 
 def r(da, dx, hnew, h):
@@ -59,9 +63,12 @@ def GN(A, X):
     AX = np.dot(A,X)
     im = np.reshape(AX, (images.shape))
     cv.imshow("old slice of ax ", im[0,:,:])
-
     h = [np.random.random(A.shape), np.random.random(X.shape)]
-    r = np.array([np.zeros(np.dot(A,X).shape),np.zeros(M)])
+    r = np.zeros(2, dtype=object)
+    r[0]= np.zeros(np.dot(A,X).shape)
+    r[1]= np.zeros(M)
+    #r = np.array([np.zeros(np.dot(A,X).shape),np.zeros(M)])
+    r = np.array(r)
     costs = list()
     iters = list()
     lambd = 0.001
@@ -83,7 +90,7 @@ def GN(A, X):
         costs.append(finalCost(h,r,lambd,A,X,h[1], y))
         i+=1
     plt.plot(iters,costs)
-    print("these are costs", costs)
+    #print("these are costs", costs)
     return A, X
 
 
@@ -100,15 +107,65 @@ def main_manchester_data():
     print("img in man func: ", reflectances.shape)
     return original_hires, rgb, reflectances
 
+def load_images_from_folder(folder):
+    i = 0
+    images = np.zeros((31,512,512,3)) 
+    for filename in os.listdir(folder):
+        img = cv.imread(os.path.join(folder,filename))
+        if img is not None:
+            img = cv.normalize(img, None, 0, 1, cv.NORM_MINMAX, cv.CV_32F)
+            images[i]=img
+            i+=1
+    images = images[:,:,:,1] #data is originally in duplicated triples
+    reflectances = images[::,::4,::4] #take the central part where 4 colors are visible, and sample every 4 pixels to make it "low res"
+    rgb = cv.imread(('./data/rgb.bmp'), 1)
+    rgb = cv.normalize(rgb, None, 0, 1, cv.NORM_MINMAX, cv.CV_32F)
+    return images, rgb, reflectances
+#********************FINDING H *********************
+# ****************** matlab code method **************
+# def reconstruct_hyperspectral(yRGB,y,Prgb,A,X):
+#     K_TO_KEEP = 6
+#     ETA = 0.6
+#     w,h,s = y.shape
+#     W,H,_ = yRGB.shape
+#     blockW = W/w
+#     blockH = H/h
+#     reconstructedHS = np.zeros(W,H,s)
 
-original_hires, rgb, images = main_manchester_data()
+#     for i in range(h):
+#         for j in range(w):
+#             X_block = X[:,i+w*j]
+#             X_indices = np.argsort(X_block)[::-1]
+#             AI = [A[:,ind] for ind in X_indices]
+#             PAI = np.matmul(np.transpose(Prgb), AI)
+
+#             for aa in blockW:
+#                 for bb in blockH:
+#                     q = yRGB[blockW*i+aa, blockH*j+bb, :]
+#                     x = bpdn_direct(PAI, q, 2^8*ETA)
+#                     reconstructedHS[blockW*i+aa, blockH*j+bb, :] = np.matmul(AI, x)
+#             print("Block: ", i, ", ", j, ", ")
+
+# def bpdn_direct(A, y, eta):
+#     m, n = A.shape
+#     xOpt = np.zeros(n)
+
+#     if np.linalg.norm(y):
+#         # NOT SURE if this is what you are supposed to return
+#         return x0pt
+                                        
+
+# Manchester data init
+#original_hires, rgb, images = main_manchester_data()
+original_hires, rgb, images = load_images_from_folder('./data/sponges_ms') #get all images
+
 print("RGB shape: ", rgb.shape)
 print("images shape: ", images.shape)
 original_lowres = images[0]
 
 y = np.reshape(images, (images.shape[0], images.shape[1]*images.shape[2]))
 S = y.shape[0]
-M = 3
+M = 30
 w = images.shape[1]
 h = images.shape[2]
 A = np.zeros((S,M))
@@ -121,12 +178,18 @@ for i in range(S):
 X = np.random.random((M,w*h))
 A, X = GN(A, X)
 
+# print("A: ", A)
+# print("X: ", X)
+print("max in X: ", np.amax(X), ", min: ", np.amin(X))
+print("max in A: ", np.amax(A), ", min: ", np.amin(A))
+
 AX = np.dot(A,X)
 im = np.reshape(AX, (images.shape))
+im = cv.normalize(im, None, 0, 255, cv.NORM_MINMAX, cv.CV_8UC1)
 cv.imshow("slice of ax ", im[0,:,:])
+plt.show()
 cv.waitKey(0)
-
-
+cv.destroyAllWindows()
 
 # import numpy as np
 # import scipy.optimize as opt
