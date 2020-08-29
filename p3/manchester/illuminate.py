@@ -81,8 +81,8 @@ def illuminate(reflectances, illum, xyzbar):
 
     RGB = manchester_post_processing(RGB)
 
+    print("hello ")
     cv.imshow("Out", RGB)
-    cv.imshow("Out", RGB**0.4)
     cv.imwrite("manchester_rgb.jpg", RGB)
     cv.waitKey(0)
     cv.destroyAllWindows()
@@ -90,32 +90,42 @@ def illuminate(reflectances, illum, xyzbar):
 def main_manchester_data():
     ref4_dict = loadmat("../manchester/assets/ref4_scene4.mat")
     reflectances = ref4_dict['reflectances']
+    reflectances = reflectances[:,:,::5]
+    print(reflectances.shape)
     # Possible Procedure: Display a hyperspectral image
     # Possible Procedure: Plot a graph of the reflectance spectrum at a pixel
 
-    illum_dict = loadmat('../manchester/assets/illum_6500.mat')
-    illum = illum_dict['illum_6500']
+    illum_dict = loadmat('../manchester/assets/illum_25000.mat')
+    illum = illum_dict['illum_25000']
+    illum = illum[::5]
+    print(illum.shape)
 
     xyzbar_dict = loadmat("../manchester/assets/xyzbar.mat")
     xyzbar = xyzbar_dict['xyzbar']
+    xyzbar = xyzbar[::5,:]
+    print(xyzbar.shape)
+
     illuminate(reflectances, illum, xyzbar)
 
-def main():
-    illum = np.loadtxt('../data/illuminant_D65.csv',delimiter=',')
-    illum = illum[20:81,:] #extracting 400-700 nm
-    illum = illum[::2] #extracting every alternate row (data was originally spaced by 5 nm)
-    illumSpec = illum[:,1] #just the spectral profile
-    print("illumspec shape", illumSpec.shape)
 
-    pictures = load_images_from_folder('../data/thread_spools_ms') #get all images
-    images = pictures[:,:,:,1] #data is originally in duplicated triples
-    images = np.transpose(images, (1, 2, 0))
-    print("images shape: ", images.shape)
+# def main():
+#     main_manchester_data()
+#     illum = np.loadtxt('../data/illuminant_D65.csv',delimiter=',')
+#     illum = illum[20:81,:] #extracting 400-700 nm
+#     illum = illum[::2] #extracting every alternate row (data was originally spaced by 5 nm)
+#     illum = illum[::5] 
+#     illumSpec = illum[:,1] #just the spectral profile
+#     print("illumspec shape", illumSpec.shape)
+
+#     pictures = load_images_from_folder('../data/thread_spools_ms') #get all images
+#     images = pictures[:,:,:,1] #data is originally in duplicated triples
+#     images = np.transpose(images, (1, 2, 0))
+#     print("images shape: ", images.shape)
     
-    xyzbar_dict = loadmat("../manchester/assets/xyzbar.mat")
-    xyzbar = xyzbar_dict['xyzbar']
-    xyzbar = xyzbar[0:31]
-    illuminate(images, illumSpec, xyzbar)
+#     xyzbar_dict = loadmat("../manchester/assets/xyzbar.mat")
+#     xyzbar = xyzbar_dict['xyzbar']
+#     xyzbar = xyzbar[0:31]
+#     illuminate(images, illumSpec, xyzbar)
 
 if __name__ == "__main__":
     main_manchester_data()
